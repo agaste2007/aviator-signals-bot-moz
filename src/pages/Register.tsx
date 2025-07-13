@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus, AlertCircle } from "lucide-react";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -17,38 +17,45 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [error, setError] = useState("");
+  const { signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Erro no cadastro",
-        description: "As senhas não coincidem",
-        variant: "destructive",
-      });
+      setError("As senhas não coincidem");
       setIsLoading(false);
       return;
     }
 
-    // Simular registro
-    setTimeout(() => {
-      if (formData.name && formData.email && formData.password) {
-        localStorage.setItem("aviator_user", JSON.stringify({ 
-          email: formData.email, 
-          name: formData.name 
-        }));
-        toast({
-          title: "Cadastro realizado com sucesso!",
-          description: "Bem-vindo ao Aviator J.S",
-        });
-        navigate("/dashboard");
-      }
+    if (formData.password.length < 6) {
+      setError("A senha deve ter pelo menos 6 caracteres");
       setIsLoading(false);
-    }, 1500);
+      return;
+    }
+
+    const { error } = await signUp(formData.email, formData.password, formData.name);
+    
+    if (error) {
+      setError(
+        error.message.includes("already registered") 
+          ? "Este email já está registrado" 
+          : "Erro no cadastro. Tente novamente."
+      );
+    }
+    
+    setIsLoading(false);
   };
 
   const updateFormData = (field: string, value: string) => {
@@ -60,35 +67,42 @@ export default function Register() {
       title="Criar Conta"
       subtitle="Junte-se à elite dos traders do Aviator J.S"
     >
-      <form onSubmit={handleRegister} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-foreground">Nome Completo</Label>
+      <form onSubmit={handleRegister} className="space-y-3">
+        {error && (
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
+            <AlertCircle className="w-4 h-4" />
+            {error}
+          </div>
+        )}
+        
+        <div className="space-y-1">
+          <Label htmlFor="name" className="text-foreground text-sm">Nome Completo</Label>
           <Input
             id="name"
             type="text"
             value={formData.name}
             onChange={(e) => updateFormData("name", e.target.value)}
             placeholder="Seu nome completo"
-            className="bg-secondary/50 border-border"
+            className="bg-secondary/50 border-border text-sm"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-foreground">Email</Label>
+        <div className="space-y-1">
+          <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
           <Input
             id="email"
             type="email"
             value={formData.email}
             onChange={(e) => updateFormData("email", e.target.value)}
             placeholder="seu@email.com"
-            className="bg-secondary/50 border-border"
+            className="bg-secondary/50 border-border text-sm"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-foreground">Senha</Label>
+        <div className="space-y-1">
+          <Label htmlFor="password" className="text-foreground text-sm">Senha</Label>
           <div className="relative">
             <Input
               id="password"
@@ -96,7 +110,7 @@ export default function Register() {
               value={formData.password}
               onChange={(e) => updateFormData("password", e.target.value)}
               placeholder="••••••••"
-              className="bg-secondary/50 border-border pr-10"
+              className="bg-secondary/50 border-border pr-10 text-sm"
               required
             />
             <Button
@@ -107,16 +121,16 @@ export default function Register() {
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
-                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                <EyeOff className="w-3 h-3 text-muted-foreground" />
               ) : (
-                <Eye className="w-4 h-4 text-muted-foreground" />
+                <Eye className="w-3 h-3 text-muted-foreground" />
               )}
             </Button>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-foreground">Confirmar Senha</Label>
+        <div className="space-y-1">
+          <Label htmlFor="confirmPassword" className="text-foreground text-sm">Confirmar Senha</Label>
           <div className="relative">
             <Input
               id="confirmPassword"
@@ -124,7 +138,7 @@ export default function Register() {
               value={formData.confirmPassword}
               onChange={(e) => updateFormData("confirmPassword", e.target.value)}
               placeholder="••••••••"
-              className="bg-secondary/50 border-border pr-10"
+              className="bg-secondary/50 border-border pr-10 text-sm"
               required
             />
             <Button
@@ -135,9 +149,9 @@ export default function Register() {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
               {showConfirmPassword ? (
-                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                <EyeOff className="w-3 h-3 text-muted-foreground" />
               ) : (
-                <Eye className="w-4 h-4 text-muted-foreground" />
+                <Eye className="w-3 h-3 text-muted-foreground" />
               )}
             </Button>
           </div>

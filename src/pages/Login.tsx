@@ -1,42 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [error, setError] = useState("");
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Simular login
-    setTimeout(() => {
-      if (email && password) {
-        localStorage.setItem("aviator_user", JSON.stringify({ email, name: "Piloto" }));
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo de volta ao Aviator J.S",
-        });
-        navigate("/dashboard");
-      } else {
-        toast({
-          title: "Erro no login",
-          description: "Verifique suas credenciais",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1500);
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      setError(
+        error.message === "Invalid login credentials" 
+          ? "Email ou senha incorretos" 
+          : "Erro no login. Tente novamente."
+      );
+    } else {
+      navigate("/dashboard");
+    }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -45,21 +49,28 @@ export default function Login() {
       subtitle="Entre com suas credenciais para continuar"
     >
       <form onSubmit={handleLogin} className="space-y-4">
+        {error && (
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
+            <AlertCircle className="w-4 h-4" />
+            {error}
+          </div>
+        )}
+        
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-foreground">Email</Label>
+          <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
           <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="seu@email.com"
-            className="bg-secondary/50 border-border"
+            className="bg-secondary/50 border-border text-sm"
             required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-foreground">Senha</Label>
+          <Label htmlFor="password" className="text-foreground text-sm">Senha</Label>
           <div className="relative">
             <Input
               id="password"
@@ -67,7 +78,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="bg-secondary/50 border-border pr-10"
+              className="bg-secondary/50 border-border pr-10 text-sm"
               required
             />
             <Button
@@ -78,9 +89,9 @@ export default function Login() {
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
-                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                <EyeOff className="w-3 h-3 text-muted-foreground" />
               ) : (
-                <Eye className="w-4 h-4 text-muted-foreground" />
+                <Eye className="w-3 h-3 text-muted-foreground" />
               )}
             </Button>
           </div>

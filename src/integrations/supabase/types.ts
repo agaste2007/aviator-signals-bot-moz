@@ -16,27 +16,36 @@ export type Database = {
     Tables: {
       signals: {
         Row: {
-          accuracy: number
+          confidence: number
           created_at: string | null
+          expires_at: string | null
+          game_round: string | null
           id: string
           multiplier: number
-          status: string
+          signal_type: string
+          timezone: string | null
           user_id: string | null
         }
         Insert: {
-          accuracy: number
+          confidence?: number
           created_at?: string | null
+          expires_at?: string | null
+          game_round?: string | null
           id?: string
           multiplier: number
-          status: string
+          signal_type?: string
+          timezone?: string | null
           user_id?: string | null
         }
         Update: {
-          accuracy?: number
+          confidence?: number
           created_at?: string | null
+          expires_at?: string | null
+          game_round?: string | null
           id?: string
           multiplier?: number
-          status?: string
+          signal_type?: string
+          timezone?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -119,6 +128,10 @@ export type Database = {
       clean_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_cat_time: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
     }
     Enums: {
