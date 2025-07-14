@@ -9,6 +9,7 @@ import { ActivationMessage } from "@/components/ActivationMessage";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignals } from "@/hooks/useSignals";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   LogOut, 
   User, 
@@ -38,8 +39,26 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  // Check if user has Placard registration (mock for now)
-  const hasPlacardAccount = Math.random() > 0.7; // Mock activation status
+  // Check if user has Placard registration from database
+  const [hasPlacardAccount, setHasPlacardAccount] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkPlacardStatus = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('placard_registered')
+        .eq('id', user.id)
+        .single();
+        
+      if (data && !error) {
+        setHasPlacardAccount(data.placard_registered || false);
+      }
+    };
+    
+    checkPlacardStatus();
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,8 +75,8 @@ export default function Dashboard() {
                 />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-foreground">Aviator J.S</h1>
-                <p className="text-xs text-muted-foreground">Trading Bot</p>
+                <h1 className="text-xs font-bold text-foreground">Aviator J.S</h1>
+                <p className="text-xs text-muted-foreground">Bot</p>
               </div>
             </div>
 
@@ -83,69 +102,70 @@ export default function Dashboard() {
         {/* Placard Banner */}
         <PlacardBanner />
 
-        {/* Connection Status */}
-        <Card className="bg-gradient-card border-border/50">
-          <div className="p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        {/* Connection Status - Only show if has Placard account */}
+        {hasPlacardAccount && (
+          <Card className="bg-gradient-card border-border/50">
+            <div className="p-2 flex items-center justify-center gap-1">
               {loading ? (
-                <WifiOff className="w-4 h-4 text-muted-foreground" />
+                <WifiOff className="w-3 h-3 text-muted-foreground" />
               ) : (
-                <Wifi className="w-4 h-4 text-success" />
+                <Wifi className="w-3 h-3 text-success" />
               )}
-              <span className="text-xs font-medium text-foreground">
+              <span className="text-xs text-foreground">
                 {loading ? "Conectando..." : "Conectado"}
               </span>
             </div>
-            <Badge variant="default" className="text-xs bg-success text-success-foreground">
-              AO VIVO
-            </Badge>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Activation Check */}
         {!hasPlacardAccount && <ActivationMessage />}
 
-        {/* Signals Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Sinais Aviator</h2>
-              <Badge variant="secondary" className="text-xs">TEMPO REAL</Badge>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={refreshSignals}
-              className="gap-1 h-7 px-2 text-xs"
-              disabled={loading}
-            >
-              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
-          </div>
-
-          {/* Signals Grid */}
-          {signals.length > 0 && (
-            <div className="grid gap-3">
-              {signals.map((signal) => (
-                <SignalCard key={signal.id} signal={signal} />
-              ))}
-            </div>
-          )}
-
-          {/* No Signals State */}
-          {!loading && signals.length === 0 && (
-            <Card className="bg-muted/50 border-border/50">
-              <div className="p-4 text-center">
-                <Bell className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">
-                  Aguardando novos sinais...
-                </p>
+        {/* Signals Section - Only show if has Placard account */}
+        {hasPlacardAccount && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <Bell className="w-3 h-3 text-primary" />
+                <h2 className="text-xs font-medium text-foreground">Sinais Aviator</h2>
               </div>
-            </Card>
-          )}
-        </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={refreshSignals}
+                className="gap-1 h-6 px-1.5 text-xs"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-2.5 h-2.5 ${loading ? 'animate-spin' : ''}`} />
+                <span className="text-xs">Atualizar</span>
+              </Button>
+            </div>
+
+            {/* Signals Grid */}
+            {signals.length > 0 && (
+              <div className="grid gap-2">
+                {signals.map((signal) => (
+                  <SignalCard key={signal.id} signal={signal} />
+                ))}
+              </div>
+            )}
+
+            {/* No Signals State */}
+            {!loading && signals.length === 0 && (
+              <Card className="bg-muted/50 border-border/50">
+                <div className="p-3 text-center">
+                  <Bell className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
+                  <p className="text-xs text-muted-foreground">
+                    Aguardando novos sinais...
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">
+                    Histórico será construído a partir do seu registro
+                  </p>
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Legal Notice */}
         <Card className="bg-warning/10 border-warning/20">

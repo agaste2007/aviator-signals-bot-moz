@@ -7,7 +7,8 @@ interface TimeDisplayProps {
 
 export function TimeDisplay({ time }: TimeDisplayProps) {
   const formatTime = (date: Date) => {
-    return date.toLocaleString('pt-MZ', {
+    // Get real current time in Mozambique timezone
+    const mozambiqueTime = new Date().toLocaleString('pt-MZ', {
       timeZone: 'Africa/Maputo',
       hour: '2-digit',
       minute: '2-digit',
@@ -16,14 +17,15 @@ export function TimeDisplay({ time }: TimeDisplayProps) {
       month: '2-digit',
       year: 'numeric'
     });
+    return mozambiqueTime;
   };
 
   return (
-    <div className="flex items-center justify-center gap-2 p-3 bg-gradient-card border border-border/50 rounded-lg shadow-card">
-      <Clock className="w-4 h-4 text-primary" />
+    <div className="flex items-center justify-center gap-1.5 p-2 bg-gradient-card border border-border/50 rounded-lg">
+      <Clock className="w-3 h-3 text-primary" />
       <div className="text-center">
-        <div className="text-xs text-muted-foreground">Moçambique (CAT)</div>
-        <div className="text-sm font-mono font-medium text-foreground">
+        <div className="text-xs text-muted-foreground">Moçambique</div>
+        <div className="text-xs font-mono font-medium text-foreground">
           {formatTime(time)}
         </div>
       </div>

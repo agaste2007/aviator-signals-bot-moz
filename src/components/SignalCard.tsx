@@ -73,46 +73,30 @@ export function SignalCard({ signal }: SignalCardProps) {
   };
 
   return (
-    <Card className="bg-gradient-card border-border/50 shadow-card hover:shadow-glow transition-all duration-300">
-      <div className="p-3 space-y-2">
+    <Card className="bg-gradient-card border-border/50">
+      <div className="p-2 space-y-1.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {getSignalIcon()}
-            <span className={`font-bold text-xs uppercase ${getSignalColor()}`}>
+            <span className={`font-medium text-xs uppercase ${getSignalColor()}`}>
               {getSignalLabel()}
             </span>
           </div>
-          <Badge variant="default" className="text-xs px-1.5 py-0.5 h-auto bg-success text-success-foreground">
-            AO VIVO
-          </Badge>
         </div>
 
-        {signal.game_round && (
-          <div className="text-xs text-muted-foreground text-center">
-            Jogo: {signal.game_round}
-          </div>
-        )}
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Multiplicador:</span>
-            <span className="text-sm font-bold text-foreground">{signal.multiplier}x</span>
+            <span className="text-xs font-bold text-foreground">{signal.multiplier}x</span>
           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Tempo:</span>
-            <div className="flex items-center gap-1">
-              <Clock className="w-2.5 h-2.5 text-muted-foreground" />
-              <span className="text-xs font-medium text-foreground">{timeRemaining()}</span>
+            <div className="flex items-center gap-0.5">
+              <Clock className="w-2 h-2 text-muted-foreground" />
+              <span className="text-xs text-foreground">{timeRemaining()}</span>
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Precisão:</span>
-              <span className="text-xs font-medium text-foreground">{signal.confidence}%</span>
-            </div>
-            <Progress value={signal.confidence} className="h-1.5" />
           </div>
         </div>
       </div>
